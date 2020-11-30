@@ -74,6 +74,7 @@ jobs:
           TEST_COVERAGE: 1
         run: make test
       - name: test-codecov
+        shell: bash
         run: |
           upload_file=$(mktemp /tmp/codecov.XXXXXX)
 
