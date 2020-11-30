@@ -79,6 +79,7 @@ jobs:
           upload_file=$(mktemp /tmp/codecov.XXXXXX)
 
           echo "test" >> "$upload_file"
+          sed -i 's/\r$//' "$upload_file"
 
           gzip -nf9 "$upload_file"
 
