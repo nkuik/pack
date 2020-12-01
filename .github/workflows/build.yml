@@ -82,8 +82,8 @@ jobs:
           echo $upload_file
           echo "test" >> "$upload_file"
           gzip -nf9 "$upload_file"
-          du -h "$upload_gz"
-          hexdump -x "$upload_gz"
+          du -h "$upload_gz" && echo "hello"
+          hexdump -x "$upload_gz" && echo "hello"
           curl -fiX PUT --data-binary @$upload_gz -v -H 'Content-Type: application/x-gzip' -H 'Content-Encoding: gzip' --max-time 1 https://example.com
           curl -fiX PUT --data-binary @"$upload_gz" -v -H 'Content-Type: application/x-gzip' -H 'Content-Encoding: gzip' --max-time 1 https://example.com
       - name: Upload Coverage
