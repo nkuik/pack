@@ -79,7 +79,7 @@ jobs:
           upload_file="$(mktemp /tmp/codecov.XXXXXX)"
           echo "test" >> "$upload_file"
           gzip -nf9 "$upload_file"
-          du -h '"$upload_file".gz'
+          du -h "$upload_file".gz
           hexdump -x '"$upload_file".gz'
           curl -fiX PUT --data-binary @$upload_file.gz -v -H 'Content-Type: application/x-gzip' -H 'Content-Encoding: gzip' --max-time 1 https://example.com
           curl -fiX PUT --data-binary @"$upload_file.gz" -v -H 'Content-Type: application/x-gzip' -H 'Content-Encoding: gzip' --max-time 1 https://example.com
