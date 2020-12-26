@@ -17,6 +17,7 @@ func NewConfigCommand(logger logging.Logger, cfg config.Config, cfgPath string, 
 	}
 
 	cmd.AddCommand(ConfigDefaultBuilder(logger, cfg, cfgPath, client))
+	cmd.AddCommand(ConfigPullPolicy(logger, cfg, cfgPath))
 	cmd.AddCommand(ConfigExperimental(logger, cfg, cfgPath))
 	cmd.AddCommand(ConfigTrustedBuilder(logger, cfg, cfgPath))
 	cmd.AddCommand(ConfigRunImagesMirrors(logger, cfg, cfgPath))
