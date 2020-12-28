@@ -20,30 +20,33 @@ import (
 	h "github.com/buildpacks/pack/testhelpers"
 )
 
-func TestConfigPullPolicy(t *testing.T) {
+func TestSetPullPolicy(t *testing.T) {
 	color.Disable(true)
 	defer color.Disable(false)
-	spec.Run(t, "ConfigPullPolicyCommand", testConfigPullPolicyCommand, spec.Random(), spec.Report(report.Terminal{}))
+	spec.Run(t, "SetPullPolicyCommand", testSetPullPolicyCommand, spec.Random(), spec.Report(report.Terminal{}))
 }
 
-func testConfigPullPolicyCommand(t *testing.T, when spec.G, it spec.S) {
+func testSetPullPolicyCommand(t *testing.T, when spec.G, it spec.S) {
 	var (
 		cmd          *cobra.Command
 		logger       logging.Logger
 		outBuf       bytes.Buffer
 		tempPackHome string
 		configPath   string
-		defaultCfg   = config.Config{
+		assert     = h.NewAssertionManager(t)
+		defaultCfg   = config.Config{}
+		neverCfg     = config.Config{
 			Experimental: true,
+			PullPolicy:   "never",
 		}
-		// neverCfg = config.Config{
-		// 	Experimental: true,
-		// 	PullPolicy:   "never",
-		// }
-		// ifNotPresentCfg = config.Config{
-		// 	Experimental: true,
-		// 	PullPolicy:   "if-not-present",
-		// }
+		ifNotPresentCfg = config.Config{
+			Experimental: true,
+			PullPolicy:   "if-not-present",
+		}
+		invalidCfg = config.Config{
+			Experimental: true,
+			PullPolicy:   "blah",
+		}
 	)
 
 	it.Before(func() {
@@ -53,7 +56,7 @@ func testConfigPullPolicyCommand(t *testing.T, when spec.G, it spec.S) {
 		h.AssertNil(t, err)
 		configPath = filepath.Join(tempPackHome, "config.toml")
 
-		cmd = commands.ConfigPullPolicy(logger, defaultCfg, configPath)
+		cmd = commands.SetPullPolicy(logger, defaultCfg, configPath)
 		cmd.SetOut(logging.GetWriterForLevel(logger, logging.InfoLevel))
 	})
 
@@ -61,24 +64,78 @@ func testConfigPullPolicyCommand(t *testing.T, when spec.G, it spec.S) {
 		h.AssertNil(t, os.RemoveAll(tempPackHome))
 	})
 
-	// when("-h", func() {
-	// 	it("prints available commands", func() {
-	// 		cmd.SetArgs([]string{"-h"})
-	// 		h.AssertNil(t, cmd.Execute())
-	// 		output := outBuf.String()
-	// 		h.AssertContains(t, output, "Usage:")
-	// 		for _, command := range []string{"add", "remove", "list"} {
-	// 			h.AssertContains(t, output, command)
-	// 		}
-	// 	})
-	// })
+	when("#SetPullPolicy", func() {
+		when("no policy is specified", func() {
+			it("lists default pull policy", func() {
+				cmd.SetArgs([]string{})
+				h.AssertNil(t, cmd.Execute())
+				output := outBuf.String()
+				h.AssertEq(t, strings.TrimSpace(output), `Pull policy is always`)
+			})
+		})
+		when("policy set to never in config", func() {
+			it.Before(func() {
+				cmd = commands.SetPullPolicy(logger, neverCfg, configPath)
+			})
 
-	when("no arguments", func() {
-		it("lists default pull policy", func() {
-			cmd.SetArgs([]string{})
-			h.AssertNil(t, cmd.Execute())
-			output := outBuf.String()
-			h.AssertEq(t, strings.TrimSpace(output), `Pull policy is always`)
+			it("lists never as pull policy", func() {
+				cmd.SetArgs([]string{})
+				h.AssertNil(t, cmd.Execute())
+				output := outBuf.String()
+				h.AssertEq(t, strings.TrimSpace(output), `Pull policy is never`)
+			})
+		})
+		when("policy set to if-not-present in config", func() {
+			it.Before(func() {
+				cmd = commands.SetPullPolicy(logger, ifNotPresentCfg, configPath)
+			})
+
+			it("lists if-not-present as pull policy", func() {
+				cmd.SetArgs([]string{})
+				h.AssertNil(t, cmd.Execute())
+				output := outBuf.String()
+				h.AssertEq(t, strings.TrimSpace(output), `Pull policy is if-not-present`)
+			})
+		})
+		when("invalid policy set", func() {
+			it.Before(func() {
+				cmd = commands.SetPullPolicy(logger, invalidCfg, configPath)
+			})
+
+			it("reports error", func() {
+				cmd.SetArgs([]string{})
+				err := cmd.Execute()
+				h.AssertError(t, err, `parsing pull policy blah: invalid pull policy blah`)
+			})
+		})
+		when("policy is specified", func() {
+			it("should set the policy when policy is valid", func() {
+				cmd.SetArgs([]string{"never"})
+				assert.Succeeds(cmd.Execute())
+				cfg, err := config.Read(configPath)
+				assert.Nil(err)
+				assert.Equal(cfg.PullPolicy, "never")
+			})
+			it("should fail when policy is invalid", func() {
+				cmd.SetArgs([]string{"invalid"})
+
+				err := cmd.Execute()
+				h.AssertError(t, err, `parsing pull policy invalid: invalid pull policy invalid`)
+			})
+		})
+		when("run with --unset", func() {
+			it.Before(func() {
+				cmd = commands.SetPullPolicy(logger, neverCfg, configPath)
+			})
+
+			it("should reset to default pull policy", func() {
+				cmd.SetArgs([]string{"--unset"})
+				assert.Succeeds(cmd.Execute())
+
+				cfg, err := config.Read(configPath)
+				assert.Nil(err)
+				assert.Equal(cfg.PullPolicy, "")
+			})
 		})
 	})
 }

@@ -16,11 +16,7 @@ import (
 //  3. Set if the pull-policy with policy command is run
 // When flag is passed, should take precedence to default value
 
-// pack config pull-policy <if-not-present | always | never>
-// pack config pull-policy --unset
-// pack config pull-policy
-
-func ConfigPullPolicy(logger logging.Logger, cfg config.Config, cfgPath string) *cobra.Command {
+func SetPullPolicy(logger logging.Logger, cfg config.Config, cfgPath string) *cobra.Command {
 	var unset bool
 	cmd := &cobra.Command{
 		Use:     "pull-policy <if-not-present | always | never>",
@@ -38,7 +34,7 @@ func ConfigPullPolicy(logger logging.Logger, cfg config.Config, cfgPath string) 
 				newPullPolicy := args[0]
 
 				if newPullPolicy == cfg.PullPolicy {
-					logger.Infof("PullPolicy is already set to %s", style.Symbol(newPullPolicy))
+					logger.Infof("Pull policy is already set to %s", style.Symbol(newPullPolicy))
 					return nil
 				}
 				pullPolicy, err := config.ParsePullPolicy(newPullPolicy)
@@ -56,7 +52,7 @@ func ConfigPullPolicy(logger logging.Logger, cfg config.Config, cfgPath string) 
 				if err := config.Write(cfg, cfgPath); err != nil {
 					return errors.Wrap(err, "writing to config")
 				}
-				logger.Infof("Resetting pull policy to default")
+				logger.Infof("Resetting pull policy to always")
 			}
 			return nil
 		}),
