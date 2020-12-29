@@ -39,13 +39,13 @@ func testSetPullPolicyCommand(t *testing.T, when spec.G, it spec.S) {
 			Experimental: true,
 			PullPolicy:   "never",
 		}
-		ifNotPresentCfg = config.Config{
-			Experimental: true,
-			PullPolicy:   "if-not-present",
-		}
 		invalidCfg = config.Config{
 			Experimental: true,
 			PullPolicy:   "blah",
+		}
+		ifNotPresentCfg = config.Config{
+			Experimental: true,
+			PullPolicy:   "if-not-present",
 		}
 	)
 

@@ -111,7 +111,13 @@ func Build(logger logging.Logger, cfg config.Config, packClient PackClient) *cob
 				logger.Warn("Using untrusted builder with volume mounts. If there is sensitive data in the volumes, this may present a security vulnerability.")
 			}
 
-			pullPolicy, err := pubcfg.ParsePullPolicy(flags.Policy)
+			var stringPolicy string
+			if flags.Policy != "" {
+				stringPolicy = flags.Policy
+			} else {
+				stringPolicy = cfg.PullPolicy
+			}
+			pullPolicy, err := pubcfg.ParsePullPolicy(stringPolicy)
 			if err != nil {
 				return errors.Wrapf(err, "parsing pull policy %s", flags.Policy)
 			}
