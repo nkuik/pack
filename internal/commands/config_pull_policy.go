@@ -4,17 +4,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
+	pubcfg "github.com/buildpacks/pack/config"
+
 	"github.com/buildpacks/pack/internal/config"
 	"github.com/buildpacks/pack/internal/style"
 	"github.com/buildpacks/pack/logging"
 )
-
-// When no flag for policy passed, use default policy
-// Default policy should be:
-//  1. "always" if not set in config
-//  2. value in config if set in config
-//  3. Set if the pull-policy with policy command is run
-// When flag is passed, should take precedence to default value
 
 func SetPullPolicy(logger logging.Logger, cfg config.Config, cfgPath string) *cobra.Command {
 	var unset bool
@@ -25,7 +20,7 @@ func SetPullPolicy(logger logging.Logger, cfg config.Config, cfgPath string) *co
 		Aliases: []string{"pull-policy"},
 		RunE: logError(logger, func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				pullPolicy, err := config.ParsePullPolicy(cfg.PullPolicy)
+				pullPolicy, err := pubcfg.ParsePullPolicy(cfg.PullPolicy)
 				if err != nil {
 					return errors.Wrapf(err, "parsing pull policy %s", cfg.PullPolicy)
 				}
@@ -37,7 +32,7 @@ func SetPullPolicy(logger logging.Logger, cfg config.Config, cfgPath string) *co
 					logger.Infof("Pull policy is already set to %s", style.Symbol(newPullPolicy))
 					return nil
 				}
-				pullPolicy, err := config.ParsePullPolicy(newPullPolicy)
+				pullPolicy, err := pubcfg.ParsePullPolicy(newPullPolicy)
 				if err != nil {
 					return errors.Wrapf(err, "parsing pull policy %s", newPullPolicy)
 				}
