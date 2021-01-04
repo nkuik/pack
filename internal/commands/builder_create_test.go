@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	pubcfg "github.com/buildpacks/pack/config"
-
 	"github.com/golang/mock/gomock"
 	"github.com/heroku/color"
 	"github.com/sclevine/spec"

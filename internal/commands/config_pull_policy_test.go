@@ -34,7 +34,7 @@ func testConfigPullPolicyCommand(t *testing.T, when spec.G, it spec.S) {
 		outBuf       bytes.Buffer
 		tempPackHome string
 		configPath   string
-		assert     = h.NewAssertionManager(t)
+		assert       = h.NewAssertionManager(t)
 		defaultCfg   = config.Config{}
 		neverCfg     = config.Config{
 			Experimental: true,
