@@ -11,7 +11,7 @@ import (
 	"github.com/buildpacks/pack/logging"
 )
 
-func SetPullPolicy(logger logging.Logger, cfg config.Config, cfgPath string) *cobra.Command {
+func ConfigPullPolicy(logger logging.Logger, cfg config.Config, cfgPath string) *cobra.Command {
 	var unset bool
 	cmd := &cobra.Command{
 		Use:     "pull-policy <if-not-present | always | never>",
@@ -22,7 +22,7 @@ func SetPullPolicy(logger logging.Logger, cfg config.Config, cfgPath string) *co
 			if len(args) == 0 {
 				pullPolicy, err := pubcfg.ParsePullPolicy(cfg.PullPolicy)
 				if err != nil {
-					return errors.Wrapf(err, "parsing pull policy %s", cfg.PullPolicy)
+					return err
 				}
 				logger.Infof("Pull policy is %s", pullPolicy.String())
 			} else {
@@ -34,7 +34,7 @@ func SetPullPolicy(logger logging.Logger, cfg config.Config, cfgPath string) *co
 				}
 				pullPolicy, err := pubcfg.ParsePullPolicy(newPullPolicy)
 				if err != nil {
-					return errors.Wrapf(err, "parsing pull policy %s", newPullPolicy)
+					return err
 				}
 				cfg.PullPolicy = newPullPolicy
 				if err = config.Write(cfg, cfgPath); err != nil {

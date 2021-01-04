@@ -20,14 +20,15 @@ import (
 	h "github.com/buildpacks/pack/testhelpers"
 )
 
-func TestSetPullPolicy(t *testing.T) {
+func TestConfigPullPolicy(t *testing.T) {
 	color.Disable(true)
 	defer color.Disable(false)
-	spec.Run(t, "SetPullPolicyCommand", testSetPullPolicyCommand, spec.Random(), spec.Report(report.Terminal{}))
+	spec.Run(t, "ConfigPullPolicyCommand", testConfigPullPolicyCommand, spec.Random(), spec.Report(report.Terminal{}))
 }
 
-func testSetPullPolicyCommand(t *testing.T, when spec.G, it spec.S) {
+func testConfigPullPolicyCommand(t *testing.T, when spec.G, it spec.S) {
 	var (
+		// Add policy variables here, use them instead
 		cmd          *cobra.Command
 		logger       logging.Logger
 		outBuf       bytes.Buffer
@@ -56,7 +57,7 @@ func testSetPullPolicyCommand(t *testing.T, when spec.G, it spec.S) {
 		h.AssertNil(t, err)
 		configPath = filepath.Join(tempPackHome, "config.toml")
 
-		cmd = commands.SetPullPolicy(logger, defaultCfg, configPath)
+		cmd = commands.ConfigPullPolicy(logger, defaultCfg, configPath)
 		cmd.SetOut(logging.GetWriterForLevel(logger, logging.InfoLevel))
 	})
 
@@ -64,7 +65,7 @@ func testSetPullPolicyCommand(t *testing.T, when spec.G, it spec.S) {
 		h.AssertNil(t, os.RemoveAll(tempPackHome))
 	})
 
-	when("#SetPullPolicy", func() {
+	when("#ConfigPullPolicy", func() {
 		when("no policy is specified", func() {
 			it("lists default pull policy", func() {
 				cmd.SetArgs([]string{})
@@ -75,7 +76,7 @@ func testSetPullPolicyCommand(t *testing.T, when spec.G, it spec.S) {
 		})
 		when("policy set to never in config", func() {
 			it.Before(func() {
-				cmd = commands.SetPullPolicy(logger, neverCfg, configPath)
+				cmd = commands.ConfigPullPolicy(logger, neverCfg, configPath)
 			})
 
 			it("lists never as pull policy", func() {
@@ -87,7 +88,7 @@ func testSetPullPolicyCommand(t *testing.T, when spec.G, it spec.S) {
 		})
 		when("policy set to if-not-present in config", func() {
 			it.Before(func() {
-				cmd = commands.SetPullPolicy(logger, ifNotPresentCfg, configPath)
+				cmd = commands.ConfigPullPolicy(logger, ifNotPresentCfg, configPath)
 			})
 
 			it("lists if-not-present as pull policy", func() {
@@ -99,13 +100,13 @@ func testSetPullPolicyCommand(t *testing.T, when spec.G, it spec.S) {
 		})
 		when("invalid policy set", func() {
 			it.Before(func() {
-				cmd = commands.SetPullPolicy(logger, invalidCfg, configPath)
+				cmd = commands.ConfigPullPolicy(logger, invalidCfg, configPath)
 			})
 
 			it("reports error", func() {
 				cmd.SetArgs([]string{})
 				err := cmd.Execute()
-				h.AssertError(t, err, `parsing pull policy blah: invalid pull policy blah`)
+				h.AssertError(t, err, `invalid pull policy blah`)
 			})
 		})
 		when("policy is specified", func() {
@@ -120,12 +121,12 @@ func testSetPullPolicyCommand(t *testing.T, when spec.G, it spec.S) {
 				cmd.SetArgs([]string{"invalid"})
 
 				err := cmd.Execute()
-				h.AssertError(t, err, `parsing pull policy invalid: invalid pull policy invalid`)
+				h.AssertError(t, err, `invalid pull policy invalid`)
 			})
 		})
 		when("run with --unset", func() {
 			it.Before(func() {
-				cmd = commands.SetPullPolicy(logger, neverCfg, configPath)
+				cmd = commands.ConfigPullPolicy(logger, neverCfg, configPath)
 			})
 
 			it("should reset to default pull policy", func() {

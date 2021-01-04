@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	pubcfg "github.com/buildpacks/pack/config"
+
 	"github.com/golang/mock/gomock"
 	"github.com/heroku/color"
 	"github.com/sclevine/spec"
@@ -89,6 +91,25 @@ func testCreateCommand(t *testing.T, when spec.G, it spec.S) {
 					"--pull-policy", "unknown-policy",
 				})
 				h.AssertError(t, command.Execute(), "parsing pull policy")
+			})
+		})
+
+		when("--pull-policy is not specified", func() {
+			when("configured pull policy is invalid", func() {
+				it.Before(func() {
+					var err error
+					tmpDir, err = ioutil.TempDir("", "create-builder-test")
+					h.AssertNil(t, err)
+					builderConfigPath = filepath.Join(tmpDir, "builder.toml")
+					cfg = config.Config{PullPolicy: "unknown-policy"}
+				})
+				it("returns error for when config set with unknown policy", func() {
+					command.SetArgs([]string{
+						"some/builder",
+						"--config", builderConfigPath,
+					})
+					h.AssertError(t, command.Execute(), "parsing pull policy")
+				})
 			})
 		})
 
