@@ -97,10 +97,9 @@ func testCreateBuilderCommand(t *testing.T, when spec.G, it spec.S) {
 
 		when("--pull-policy is not specified", func() {
 			when("configured pull policy is invalid", func() {
-				it.Before(func() {
-					cfg = config.Config{PullPolicy: "unknown-policy"}
-				})
 				it("returns error for when config set with unknown policy", func() {
+					cfg = config.Config{PullPolicy: "unknown-policy"}
+					command = commands.BuilderCreate(logger, cfg, mockClient)
 					command.SetArgs([]string{
 						"some/builder",
 						"--config", builderConfigPath,

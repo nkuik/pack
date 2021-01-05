@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	pubcfg "github.com/buildpacks/pack/config"
-
 	"github.com/golang/mock/gomock"
 	"github.com/heroku/color"
 	"github.com/sclevine/spec"
@@ -106,20 +104,6 @@ func testCreateCommand(t *testing.T, when spec.G, it spec.S) {
 					h.AssertError(t, command.Execute(), "parsing pull policy")
 				})
 			})
-			// when("configured pull policy is valid", func() {
-			// 	it("uses configured policy", func() {
-			// 		mockClient.EXPECT().
-			// 			CreateBuilder(gomock.Any(), EqBuildOptionsWithPullPolicy(pubcfg.PullNever)).
-			// 			Return(nil)
-			// 		cfg = config.Config{PullPolicy: "never"}
-			// 		command = commands.BuilderCreate(logger, cfg, mockClient)
-			// 		command.SetArgs([]string{
-			// 			"some/builder",
-			// 			"--config", builderConfigPath,
-			// 		})
-			// 		h.AssertNil(t, command.Execute())
-			// 	})
-			// })
 		})
 
 		when("--buildpack-registry flag is specified but experimental isn't set in the config", func() {

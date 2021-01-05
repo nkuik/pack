@@ -35,7 +35,7 @@ func Rebase(logger logging.Logger, cfg config.Config, client PackClient) *cobra.
 			}
 			opts.PullPolicy, err = pubcfg.ParsePullPolicy(stringPolicy)
 			if err != nil {
-				return errors.Wrap(err, "parsing pull policy")
+				return errors.Wrapf(err, "parsing pull policy %s", stringPolicy)
 			}
 
 			if err := client.Rebase(cmd.Context(), opts); err != nil {

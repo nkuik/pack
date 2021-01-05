@@ -28,26 +28,13 @@ func TestConfigPullPolicy(t *testing.T) {
 
 func testConfigPullPolicyCommand(t *testing.T, when spec.G, it spec.S) {
 	var (
-		// Add policy variables here, use them instead
 		cmd          *cobra.Command
 		logger       logging.Logger
 		outBuf       bytes.Buffer
 		tempPackHome string
 		configPath   string
 		assert       = h.NewAssertionManager(t)
-		defaultCfg   = config.Config{}
-		neverCfg     = config.Config{
-			Experimental: true,
-			PullPolicy:   "never",
-		}
-		invalidCfg = config.Config{
-			Experimental: true,
-			PullPolicy:   "blah",
-		}
-		ifNotPresentCfg = config.Config{
-			Experimental: true,
-			PullPolicy:   "if-not-present",
-		}
+		cfg          = config.Config{}
 	)
 
 	it.Before(func() {
@@ -57,7 +44,7 @@ func testConfigPullPolicyCommand(t *testing.T, when spec.G, it spec.S) {
 		h.AssertNil(t, err)
 		configPath = filepath.Join(tempPackHome, "config.toml")
 
-		cmd = commands.ConfigPullPolicy(logger, defaultCfg, configPath)
+		cmd = commands.ConfigPullPolicy(logger, cfg, configPath)
 		cmd.SetOut(logging.GetWriterForLevel(logger, logging.InfoLevel))
 	})
 
@@ -69,67 +56,98 @@ func testConfigPullPolicyCommand(t *testing.T, when spec.G, it spec.S) {
 		when("no policy is specified", func() {
 			it("lists default pull policy", func() {
 				cmd.SetArgs([]string{})
+
 				h.AssertNil(t, cmd.Execute())
+
 				output := outBuf.String()
 				h.AssertEq(t, strings.TrimSpace(output), `Pull policy is always`)
 			})
 		})
-		when("policy set to never in config", func() {
-			it.Before(func() {
-				cmd = commands.ConfigPullPolicy(logger, neverCfg, configPath)
-			})
 
+		when("policy set to never in config", func() {
 			it("lists never as pull policy", func() {
+				cfg.PullPolicy = "never"
+				cmd = commands.ConfigPullPolicy(logger, cfg, configPath)
 				cmd.SetArgs([]string{})
+
 				h.AssertNil(t, cmd.Execute())
+
 				output := outBuf.String()
 				h.AssertEq(t, strings.TrimSpace(output), `Pull policy is never`)
 			})
 		})
-		when("policy set to if-not-present in config", func() {
-			it.Before(func() {
-				cmd = commands.ConfigPullPolicy(logger, ifNotPresentCfg, configPath)
-			})
 
+		when("policy set to if-not-present in config", func() {
 			it("lists if-not-present as pull policy", func() {
+				cfg.PullPolicy = "if-not-present"
+				cmd = commands.ConfigPullPolicy(logger, cfg, configPath)
 				cmd.SetArgs([]string{})
+
 				h.AssertNil(t, cmd.Execute())
+
 				output := outBuf.String()
 				h.AssertEq(t, strings.TrimSpace(output), `Pull policy is if-not-present`)
 			})
 		})
-		when("invalid policy set", func() {
-			it.Before(func() {
-				cmd = commands.ConfigPullPolicy(logger, invalidCfg, configPath)
-			})
 
-			it("reports error", func() {
-				cmd.SetArgs([]string{})
-				err := cmd.Execute()
-				h.AssertError(t, err, `invalid pull policy blah`)
+		when("policy provided is the same as configured pull policy", func() {
+			it("provides a helpful message", func() {
+				cfg.PullPolicy = "if-not-present"
+				cmd = commands.ConfigPullPolicy(logger, cfg, configPath)
+				cmd.SetArgs([]string{"if-not-present"})
+
+				h.AssertNil(t, cmd.Execute())
+
+				output := outBuf.String()
+				h.AssertEq(t, strings.TrimSpace(output), `Pull policy is already set to if-not-present`)
 			})
-		})
-		when("policy is specified", func() {
-			it("should set the policy when policy is valid", func() {
+			it("it does not change the configured policy", func() {
+				cmd = commands.ConfigPullPolicy(logger, cfg, configPath)
+				cmd.SetArgs([]string{"never"})
+
+				cmd = commands.ConfigPullPolicy(logger, cfg, configPath)
 				cmd.SetArgs([]string{"never"})
 				assert.Succeeds(cmd.Execute())
-				cfg, err := config.Read(configPath)
-				assert.Nil(err)
-				assert.Equal(cfg.PullPolicy, "never")
-			})
-			it("should fail when policy is invalid", func() {
-				cmd.SetArgs([]string{"invalid"})
 
-				err := cmd.Execute()
-				h.AssertError(t, err, `invalid pull policy invalid`)
+				readCfg, err := config.Read(configPath)
+				assert.Nil(err)
+				assert.Equal(readCfg.PullPolicy, "never")
 			})
 		})
-		when("run with --unset", func() {
-			it.Before(func() {
-				cmd = commands.ConfigPullPolicy(logger, neverCfg, configPath)
-			})
 
-			it("should reset to default pull policy", func() {
+		when("invalid policy is specified", func() {
+			it("reports error", func() {
+				cfg.PullPolicy = "unknown-policy"
+				cmd = commands.ConfigPullPolicy(logger, cfg, configPath)
+				cmd.SetArgs([]string{})
+
+				err := cmd.Execute()
+				h.AssertError(t, err, `invalid pull policy unknown-policy`)
+			})
+		})
+
+		when("valid policy is specified", func() {
+			it("sets the policy in config", func() {
+				cmd.SetArgs([]string{"never"})
+				assert.Succeeds(cmd.Execute())
+
+				readCfg, err := config.Read(configPath)
+				assert.Nil(err)
+				assert.Equal(readCfg.PullPolicy, "never")
+			})
+			it("should fail invalid policy given", func() {
+				cmd.SetArgs([]string{"unknown-policy"})
+
+				err := cmd.Execute()
+				h.AssertError(t, err, `invalid pull policy unknown-policy`)
+			})
+		})
+
+		when("--unset", func() {
+			it("removes set policy and resets to default pull policy", func() {
+				cmd.SetArgs([]string{"never"})
+				cmd = commands.ConfigPullPolicy(logger, cfg, configPath)
+
 				cmd.SetArgs([]string{"--unset"})
 				assert.Succeeds(cmd.Execute())
 
